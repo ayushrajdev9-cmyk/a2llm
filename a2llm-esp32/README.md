@@ -147,7 +147,7 @@ Presets:
 |--------|--------:|----:|----:|-------:|---------------|
 | nano   |   34K   |  32 |  32 |   2    | **ESP32** (int8, 33 KB flash) |
 | micro  |  119K   |  64 |  64 |   2    | any laptop, seconds |
-| mini   |  838K   | 128 | 128 |   4    | normal PC (default) |
+| mini   |  1.06M  | 128 | 144 |   4    | normal PC (default, ~1M params) |
 | small  |  2.8M   | 256 | 192 |   6    | better PC / entry GPU |
 | base   |  4.9M   | 256 | 256 |   6    | VPS / Colab T4 |
 | large  |  14.5M  | 512 | 384 |   8    | best VPS / GPU |

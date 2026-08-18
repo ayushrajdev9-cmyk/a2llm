@@ -82,7 +82,7 @@ it writes a bundled public-domain fallback — the pipeline always works offline
 ## 5. Train
 
 ```bash
-python scripts/train.py --preset mini     # PC normal: 838K params, ~10 min CPU
+python scripts/train.py --preset mini     # PC normal: 1.06M params, ~1-2 h on a 4-core CPU (use --steps 1000 for a quick run)
 ```
 
 Presets (one codebase, six sizes):
@@ -91,7 +91,7 @@ Presets (one codebase, six sizes):
 |--------|--------:|----:|----:|-------:|---------------|
 | nano   |   34K   |  32 |  32 |   2    | **ESP32** (int8, 33 KB flash) |
 | micro  |  119K   |  64 |  64 |   2    | any laptop, seconds |
-| mini   |  838K   | 128 | 128 |   4    | normal PC (default) |
+| mini   |  1.06M  | 128 | 144 |   4    | normal PC (default, ~1M params) |
 | small  |  2.8M   | 256 | 192 |   6    | better PC / entry GPU |
 | base   |  4.9M   | 256 | 256 |   6    | VPS / Colab T4 |
 | large  |  14.5M  | 512 | 384 |   8    | best VPS / GPU |
@@ -220,7 +220,7 @@ configuration, stored in the checkpoint.
 |---------|------|-------------------|-------|
 | nano    | 1 GB | ~6 min            | also runs on ESP32 |
 | micro   | 1 GB | ~3 min            | |
-| mini    | 2 GB | ~10 min           | default |
+| mini    | 2 GB | ~1-2 h            | default (~1M params) |
 | small   | 4 GB | ~30 min           | |
 | base    | 8 GB | ~1–2 h CPU / ~10 min T4 | |
 | large   | 16 GB| hours CPU / ~40 min T4 | |

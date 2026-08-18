@@ -2,9 +2,9 @@
   "model": {
     "vocab_size": 256,
     "context_length": 128,
-    "embedding_dim": 128,
+    "embedding_dim": 144,
     "num_layers": 4,
-    "num_heads": 4,
+    "num_heads": 6,
     "dropout": 0.1
   },
   "data": {
@@ -14,10 +14,10 @@
   "train": {
     "learning_rate": 0.0003,
     "batch_size": 32,
-    "num_steps": 3000,
-    "warmup_steps": 150,
-    "eval_every": 250,
-    "sample_every": 250,
+    "num_steps": 4000,
+    "warmup_steps": 200,
+    "eval_every": 400,
+    "sample_every": 400,
     "log_every": 50
   },
   "checkpoint_dir": "checkpoints/mini",

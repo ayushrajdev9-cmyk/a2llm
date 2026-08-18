@@ -142,15 +142,15 @@ PRESETS: dict[str, A2LMConfig] = {
         ),
         run_name="a2lm-micro",
     ),
-    # Normal PC (CPU): the default demo size.
+    # Normal PC (CPU): the default demo size, ~1M params.
     "mini": A2LMConfig(
         model=ModelConfig(
-            vocab_size=256, context_length=128, embedding_dim=128,
-            num_layers=4, num_heads=4, dropout=0.1,
+            vocab_size=256, context_length=128, embedding_dim=144,
+            num_layers=4, num_heads=6, dropout=0.1,
         ),
         train=TrainConfig(
-            learning_rate=3e-4, batch_size=32, num_steps=3000,
-            warmup_steps=150, eval_every=250, sample_every=250, log_every=50,
+            learning_rate=3e-4, batch_size=32, num_steps=4000,
+            warmup_steps=200, eval_every=400, sample_every=400, log_every=50,
         ),
         run_name="a2lm-mini",
     ),
