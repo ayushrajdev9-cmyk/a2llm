@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+*.egg-info/
+
+# A2LM artifacts
+checkpoints/*.pt
+experiments/
+logs_*.txt
+data/tiny_shakespeare.txt
+
+# ESP32 build output
+esp32/build/
+esp32/sdkconfig
+esp32/host_test/host_a2lm
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
