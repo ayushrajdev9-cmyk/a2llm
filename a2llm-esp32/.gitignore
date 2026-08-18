@@ -8,6 +8,7 @@ __pycache__/
 checkpoints/*.pt
 !checkpoints/nano_best.pt
 !checkpoints/micro/best.pt
+!checkpoints/mini/best.pt
 experiments/
 logs_*.txt
 data/tiny_shakespeare.txt
