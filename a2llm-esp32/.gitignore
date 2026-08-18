@@ -6,6 +6,8 @@ __pycache__/
 
 # A2LM artifacts
 checkpoints/*.pt
+!checkpoints/nano_best.pt
+!checkpoints/micro/best.pt
 experiments/
 logs_*.txt
 data/tiny_shakespeare.txt
