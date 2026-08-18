@@ -2,7 +2,7 @@
 
 import torch
 
-from a2lm.attention import CausalMultiHeadSelfAttention, build_causal_mask
+from a2llm.attention import CausalMultiHeadSelfAttention, build_causal_mask
 
 
 class TestCausalMask:

@@ -2,10 +2,10 @@
 
 import torch
 
-from a2lm.config import ModelConfig
-from a2lm.generate import generate_text
-from a2lm.model import A2LM
-from a2lm.tokenizer import ByteTokenizer
+from a2llm.config import ModelConfig
+from a2llm.generate import generate_text
+from a2llm.model import A2LM
+from a2llm.tokenizer import ByteTokenizer
 
 
 def make_model() -> A2LM:

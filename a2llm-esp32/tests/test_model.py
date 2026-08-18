@@ -2,8 +2,8 @@
 
 import torch
 
-from a2lm.config import ModelConfig
-from a2lm.model import A2LM
+from a2llm.config import ModelConfig
+from a2llm.model import A2LM
 
 
 def make_cfg(**kw) -> ModelConfig:

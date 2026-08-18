@@ -8,9 +8,9 @@
 set -e
 cd /content
 if [ ! -d a2lm ]; then
-  git clone https://github.com/ayushrajdev9-cmyk/a2lm.git
+  git clone https://github.com/ayushrajdev9-cmyk/a2llm.git
 fi
-cd a2lm
+cd a2llm/a2llm-esp32
 pip install -q torch --index-url https://download.pytorch.org/whl/cu124 2>/dev/null || pip install -q torch
 pip install -q numpy pytest
 python scripts/prepare_data.py

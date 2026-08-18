@@ -2,14 +2,14 @@
 
 import torch
 
-from a2lm.checkpoint import (
+from a2llm.checkpoint import (
     BEST_NAME, LATEST_NAME, load_checkpoint, load_model_for_inference,
     save_checkpoint,
 )
-from a2lm.config import A2LMConfig
-from a2lm.model import A2LM
-from a2lm.tokenizer import ByteTokenizer
-from a2lm.utils import count_parameters
+from a2llm.config import A2LMConfig
+from a2llm.model import A2LM
+from a2llm.tokenizer import ByteTokenizer
+from a2llm.utils import count_parameters
 
 
 def make_cfg() -> A2LMConfig:

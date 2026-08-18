@@ -17,10 +17,10 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from a2lm.checkpoint import load_checkpoint, load_model_for_inference
-from a2lm.config import A2LMConfig, PRESETS, preset
-from a2lm.training import train
-from a2lm.utils import format_bytes, model_report
+from a2llm.checkpoint import load_checkpoint, load_model_for_inference
+from a2llm.config import A2LMConfig, PRESETS, preset
+from a2llm.training import train
+from a2llm.utils import format_bytes, model_report
 
 
 def _apply_overrides(cfg: A2LMConfig, args: argparse.Namespace) -> A2LMConfig:
@@ -54,15 +54,15 @@ def cmd_train(args: argparse.Namespace) -> None:
 
 
 def cmd_evaluate(args: argparse.Namespace) -> None:
-    from a2lm.evaluation import evaluate, print_report
-    from a2lm.training import pick_device
+    from a2llm.evaluation import evaluate, print_report
+    from a2llm.training import pick_device
     device = pick_device(args.device)
     print_report(evaluate(args.checkpoint, device=device, val_steps=args.val_steps))
 
 
 def cmd_generate(args: argparse.Namespace) -> None:
-    from a2lm.generate import generate_text
-    from a2lm.training import pick_device
+    from a2llm.generate import generate_text
+    from a2llm.training import pick_device
     device = pick_device(args.device)
     model, tokenizer, _ = load_model_for_inference(args.checkpoint, device=device)
     stop_tokens = tokenizer.encode(args.stop) if args.stop else None
@@ -80,7 +80,7 @@ def cmd_count_params(args: argparse.Namespace) -> None:
     if args.checkpoint:
         model, _, _ = load_model_for_inference(args.checkpoint)
     else:
-        from a2lm.model import A2LM
+        from a2llm.model import A2LM
         model = A2LM(preset(args.preset).model)
     r = model_report(model)
     print(f"Total parameters:       {r['total']:,}")

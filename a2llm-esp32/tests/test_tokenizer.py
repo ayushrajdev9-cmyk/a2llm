@@ -2,7 +2,7 @@
 
 import pytest
 
-from a2lm.tokenizer import ByteTokenizer, CharTokenizer
+from a2llm.tokenizer import ByteTokenizer, CharTokenizer
 
 
 TEXT = "Hello, A2LM! Héllo wörld 🌍 — \n\t\"quotes\""

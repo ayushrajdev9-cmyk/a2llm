@@ -4,8 +4,8 @@ import random
 
 import pytest
 
-from a2lm.dataset import TokenSequenceDataset, get_batch, iterate_batches, load_corpus
-from a2lm.tokenizer import ByteTokenizer
+from a2llm.dataset import TokenSequenceDataset, get_batch, iterate_batches, load_corpus
+from a2llm.tokenizer import ByteTokenizer
 
 
 def make_corpus(tmp_path, text="abcdefghijklmnopqrstuvwxyz"):

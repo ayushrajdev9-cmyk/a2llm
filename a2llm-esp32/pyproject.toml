@@ -3,7 +3,7 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "a2lm"
+name = "a2llm"
 version = "0.1.0"
 description = "A2LM - a small, genuine, from-scratch language model (trains locally, runs on PC, VPS, Colab, and exports to ESP32)"
 readme = "README.md"
@@ -18,7 +18,7 @@ dependencies = [
 dev = ["pytest>=7"]
 
 [project.scripts]
-a2lm = "a2lm.cli:main"
+a2llm = "a2llm.cli:main"
 
 [tool.setuptools.packages.find]
 include = ["a2lm*"]

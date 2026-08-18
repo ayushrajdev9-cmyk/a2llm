@@ -7,8 +7,8 @@ towards ~0 on a small fixed batch.
 
 import torch
 
-from a2lm.config import ModelConfig
-from a2lm.model import A2LM
+from a2llm.config import ModelConfig
+from a2llm.model import A2LM
 
 
 def test_model_overfits_tiny_batch():

@@ -10,9 +10,9 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT))
 
-from a2lm.checkpoint import load_model_for_inference
-from a2lm.generate import generate_text
-from a2lm.training import pick_device
+from a2llm.checkpoint import load_model_for_inference
+from a2llm.generate import generate_text
+from a2llm.training import pick_device
 
 
 def main() -> None:

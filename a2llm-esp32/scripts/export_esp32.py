@@ -18,9 +18,9 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT))
 
-from a2lm.checkpoint import load_checkpoint, restore_tokenizer
-from a2lm.model import A2LM
-from a2lm.quantize import export_model_to_header
+from a2llm.checkpoint import load_checkpoint, restore_tokenizer
+from a2llm.model import A2LM
+from a2llm.quantize import export_model_to_header
 
 
 def main() -> None:
@@ -33,7 +33,7 @@ def main() -> None:
     tok = restore_tokenizer(ckpt["tokenizer"])
     print(f"[export] tokenizer: {type(tok).__name__}")
 
-    from a2lm.config import A2LMConfig
+    from a2llm.config import A2LMConfig
     cfg = A2LMConfig.from_dict(ckpt["config"])
     model = A2LM(cfg.model)
     model.load_state_dict(ckpt["model"])

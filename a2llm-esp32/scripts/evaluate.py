@@ -10,8 +10,8 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT))
 
-from a2lm.evaluation import evaluate, print_report
-from a2lm.training import pick_device
+from a2llm.evaluation import evaluate, print_report
+from a2llm.training import pick_device
 
 
 def main() -> None:
