@@ -38,7 +38,12 @@ def main() -> None:
         return
 
     if args.model not in MODELS:
-        sys.exit(f"unknown model {args.model!r}; choose from: {', '.join(MODELS)}")
+        # also accept the friendly name (e.g. "micro" for "a2llm-micro.pt")
+        match = [a for a in MODELS if args.model in a]
+        if len(match) == 1:
+            args.model = match[0]
+        else:
+            sys.exit(f"unknown model {args.model!r}; choose from: {', '.join(MODELS)}")
 
     url = f"https://github.com/{REPO}/releases/download/{RELEASE}/{args.model}"
     out = Path(args.out or f"checkpoints/{args.model}")
