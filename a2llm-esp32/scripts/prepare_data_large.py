@@ -3,18 +3,18 @@
 
 Sources (byte tokenizer => tokens == UTF-8 bytes):
 
-  en: wikitext-103-raw (Wikipedia articles) + TinyStories (simple stories)
-  hi: Common Crawl (mc4) Hindi
-  ur: Common Crawl (mc4) Urdu
-  bn: Common Crawl (mc4) Bengali
+  en: wikitext-103-raw (Wikipedia, parquet) + TinyStories (simple stories)
+  hi: Common Crawl (mc4 / c4) Hindi  - Devanagari
+  ur: Common Crawl (mc4 / c4) Urdu
+  bn: Common Crawl (mc4 / c4) Bengali
   es/fr: optional via --extra-es-fr
 
-Default corpus: ~2.2 GB of text (~2.2 B tokens). Downloads are cached in
-data/raw/ and skipped on re-runs.
+Default corpus: ~1.7-2 GB of text (~1.7-2 B tokens). Downloads are cached in
+data/raw/ and skipped on re-runs, so re-running only fetches what is missing.
 
 Usage:
     python scripts/prepare_data_large.py
-    python scripts/prepare_data_large.py --extra-es-fr   # + ~1.6B more tokens
+    python scripts/prepare_data_large.py --extra-es-fr   # + more languages
     python scripts/prepare_data_large.py --out data/pretrain.txt
 """
 
@@ -27,17 +27,24 @@ import sys
 import urllib.request
 from pathlib import Path
 
-WIKITEXT = "https://huggingface.co/datasets/Salesforce/wikitext/raw/main/wikitext-103-raw/wiki.train.raw"
-TINYSTORIES = "https://huggingface.co/datasets/roneneldan/TinyStories/resolve/main/TinyStories-train.txt"
-MC4 = "https://huggingface.co/datasets/allenai/c4/resolve/main/multilingual/c4-{lang}.tfrecord-{i:05d}-of-00064.json.gz"
+WIKITEXT_PARQUET = [
+    "https://huggingface.co/datasets/Salesforce/wikitext/resolve/main/"
+    "wikitext-103-raw-v1/train-0000{i}-of-00002.parquet".format(i=i)
+    for i in range(2)
+]
+TINYSTORIES = ("https://huggingface.co/datasets/roneneldan/TinyStories/"
+               "resolve/main/TinyStories-train.txt")
+MC4 = ("https://huggingface.co/datasets/allenai/c4/resolve/main/"
+       "multilingual/c4-{lang}.tfrecord-{i:05d}-of-{total:05d}.json.gz")
 
-# (lang, n_shards) — each shard is a gzipped JSONL file with a "text" field
+# (lang, n_shards, total_shards) - sized so total CC text is ~1.5 GB
+# (measured: 1 hi shard = ~132 MB of text)
 LANG_SHARDS = {
-    "hi": 4,
-    "ur": 2,
-    "bn": 2,
+    "hi": (6, 1024),
+    "ur": (4, 128),
+    "bn": (4, 512),
 }
-EXTRA_SHARDS = {"es": 4, "fr": 4}  # only with --extra-es-fr
+EXTRA_SHARDS = {"es": (16, 1024), "fr": (16, 1024)}  # only with --extra-es-fr
 
 
 def download(url: str, dest: Path, label: str) -> bool:
@@ -54,11 +61,28 @@ def download(url: str, dest: Path, label: str) -> bool:
         return False
 
 
+def write_parquet_text(dest: Path, fh) -> int:
+    """Extract the 'text' column of a parquet file as plain text."""
+    try:
+        import pandas as pd
+    except ImportError:
+        print("  [skip] pandas/pyarrow not installed - pip install pandas pyarrow",
+              file=sys.stderr)
+        return 0
+    df = pd.read_parquet(dest)
+    n = 0
+    for text in df["text"].astype(str):
+        fh.write(text)
+        fh.write("\n\n")
+        n += len(text.encode("utf-8"))
+    return n
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description="Build a multilingual pretraining corpus")
     ap.add_argument("--out", default="data/pretrain_multilingual.txt")
     ap.add_argument("--extra-es-fr", action="store_true",
-                    help="also pull Spanish + French shards (~+1.6B tokens)")
+                    help="also pull Spanish + French shards")
     args = ap.parse_args()
 
     out = Path(args.out)
@@ -69,22 +93,26 @@ def main() -> None:
         langs.update(EXTRA_SHARDS)
 
     sources: list[tuple[str, str, str]] = []  # (label, kind, url)
-    sources.append(("en-wikitext103", "plain", WIKITEXT))
+    for i, url in enumerate(WIKITEXT_PARQUET):
+        sources.append((f"en-wikitext103-{i}", "parquet", url))
     sources.append(("en-tinystories", "plain", TINYSTORIES))
-    for lang, n in langs.items():
+    for lang, (n, total) in langs.items():
         for i in range(n):
-            url = MC4.format(lang=lang, i=i)
-            sources.append((f"{lang}-{i:02d}", "jsonl.gz", url))
+            sources.append((f"{lang}-{i:02d}", "jsonl.gz",
+                            MC4.format(lang=lang, i=i, total=total)))
 
     print(f"== building {out} from {len(sources)} source files ==")
     total = 0
     with open(out, "w", encoding="utf-8") as fh:
         for label, kind, url in sources:
-            dest = raw_dir / f"{label}.{'jsonl.gz' if kind == 'jsonl.gz' else 'txt'}"
+            ext = {"parquet": ".parquet", "plain": ".txt", "jsonl.gz": ".jsonl.gz"}[kind]
+            dest = raw_dir / f"{label}{ext}"
             if not download(url, dest, label):
                 continue
             n = 0
-            if kind == "plain":
+            if kind == "parquet":
+                n = write_parquet_text(dest, fh)
+            elif kind == "plain":
                 data = dest.read_bytes()
                 fh.write(data.decode("utf-8", errors="ignore"))
                 fh.write("\n\n")

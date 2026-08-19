@@ -21,4 +21,6 @@ esp32/host_test/host_a2lm
 # Editors / OS
 .vscode/
 .idea/
-.DS_Store
+.DS_Storedata/raw/
+data/smoke_multilingual.txt
+data/pretrain_multilingual.txt
