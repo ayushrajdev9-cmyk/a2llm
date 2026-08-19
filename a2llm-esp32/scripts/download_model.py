@@ -15,11 +15,12 @@ import urllib.request
 from pathlib import Path
 
 REPO = "ayushrajdev9-cmyk/a2llm"
-RELEASE = "v0.1.0"
+RELEASE = "v0.2.0"
 # asset name -> friendly name (keep in sync with the GitHub release)
 MODELS = {
     "a2llm-esp32-nano.pt": "nano  (A2LLM-ESP32, 34,432 params, 33 KB int8 flash)",
-    "a2llm-micro.pt": "micro (119,296 params, trains in minutes on any laptop)",
+    "a2llm-micro.pt": "micro (120,064 params, trains in ~90 s on any laptop)",
+    "a2llm-mini.pt": "mini (1,056,096 params, the default PC model, val_loss 3.3162)",
 }
 
 def main() -> None:

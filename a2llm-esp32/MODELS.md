@@ -18,7 +18,7 @@ a2llm-large           14,479,104     55.2 MB 14139.8 KB   best VPS / GPU
 STATUS:
   - A2LLM-ESP32 (nano): TRAINED ✅  (checkpoints/nano_best.pt, GitHub release v0.1.0)
   - a2llm-micro: TRAINED ✅  (checkpoints/micro/best.pt, val_loss 3.3227, ppl 27.73)
-  - a2llm-mini: config ready - train on Colab (~15 min T4) ya PC overnight
+  - a2llm-mini: TRAINED ✅  (GitHub release v0.2.0, val_loss 3.3162, ppl 27.56, T4 67.6s)
   - a2llm-small: config ready - not trained yet
   - a2llm-base: config ready - not trained yet (best for Colab T4)
   - a2llm-large: config ready - not trained yet
@@ -27,6 +27,7 @@ DOWNLOAD trained models:
   python scripts/download_model.py            # list
   python scripts/download_model.py nano       # ESP32 model
   python scripts/download_model.py micro      # laptop model
+  python scripts/download_model.py mini        # default PC model (T4 trained)
 
 TRAIN any model (Colab T4 recommended):
   python scripts/train.py --preset <nano|micro|mini|small|base|large>
