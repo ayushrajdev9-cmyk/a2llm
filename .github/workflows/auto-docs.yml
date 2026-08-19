@@ -1,0 +1,57 @@
+name: auto-docs
+on:
+  release:
+    types: [created]
+permissions:
+  contents: write
+jobs:
+  update-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Update MODELS.md + README.md from release
+        env:
+          BODY: ${{ github.event.release.body }}
+          TAG: ${{ github.event.release.tag_name }}
+          URL: ${{ github.event.release.html_url }}
+        run: |
+          python3 - <<'EOF'
+          import os, re
+          body, tag, url = os.environ["BODY"], os.environ["TAG"], os.environ["URL"]
+          model = re.search(r"MODEL:\s*(\S+)", body).group(1)
+          loss  = re.search(r"val_loss\s*([\d.]+)", body).group(1)
+          ppl   = re.search(r"ppl\s*([\d.]+)", body).group(1)
+          row_name = "a2llm-esp32-nano" if model == "nano" else f"a2llm-{model}"
+
+          # ---- MODELS.md: rewrite the STATUS line for this model
+          txt = open("MODELS.md").read()
+          for line in txt.splitlines():
+              low = line.lower()
+              if row_name in low and "trained" in low:
+                  indent = line[: len(line) - len(line.lstrip())]
+                  txt = txt.replace(
+                      line,
+                      f'{indent}- {line.strip().split(":", 1)[0]}: TRAINED ✅  (release {tag}, multilingual, val_loss {loss}, ppl {ppl})',
+                  )
+                  break
+          open("MODELS.md", "w").write(txt)
+
+          # ---- README.md: models table status + releases table row
+          r = open("README.md").read()
+          # models table: | a2llm-esp32-nano | 34,432 | ✅ trained | v0.1.0 |
+          pat = re.compile(r"(\|\s*" + re.escape(row_name) + r"\s*\|[^|]*\|)([^|]*\|)([^|]*\|)")
+          r2 = pat.sub(lambda m: m.group(1) + " ✅ trained | " + tag + " |", r, count=1)
+          if r2 != r:
+              r = r2
+          # releases table: append a row after the header separator
+          sep = re.search(r"(\| Release \| Assets \| Result \|\n\|[-| ]+\|\n)", r)
+          if sep and f"[{tag}]" not in r:
+              r = r.replace(sep.group(1), sep.group(1) + f"| [{tag}]({url}) | `{row_name}.pt` | val_loss {loss}, ppl {ppl} |\n")
+          open("README.md", "w").write(r)
+          print(f"docs updated for {model} {tag} (val_loss {loss}, ppl {ppl})")
+          EOF
+          git config user.name "a2llm-bot"
+          git config user.email "actions@github.com"
+          git add MODELS.md README.md
+          git commit -m "docs: ${{ github.event.release.tag_name }} ${{ github.event.release.name }}" || exit 0
+          git push
