@@ -6,9 +6,15 @@ serves fixed-length input/target sequence pairs:
     input  = tokens[0 : n]
     target = tokens[1 : n+1]
 
-The dataset lives fully in RAM (tiny corpora), which keeps the pipeline
-simple and reproducible. A ``torch.utils.data.Dataset`` view is provided so
-``DataLoader`` or a manual sampler can be used.
+Memory model:
+
+* ``ByteTokenizer`` corpora (the default): the token stream is a zero-copy
+  ``numpy.uint8`` view over the raw UTF-8 bytes, so a ~2-3 GB multilingual
+  corpus costs ~2-3 GB of RAM. No Python lists of ints are ever built.
+* Other tokenizers: the token stream is a Python list (small corpora).
+
+Batches are drawn as random contiguous windows (no full-corpus shuffle), so
+training cost does not depend on corpus size - only on the number of steps.
 """
 
 from __future__ import annotations
@@ -18,19 +24,20 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterator, List, Sequence, Tuple
 
+import numpy as np
 import torch
 from torch.utils.data import Dataset
 
-from .tokenizer import Tokenizer
+from .tokenizer import ByteTokenizer, Tokenizer
 
 
 @dataclass
 class TextCorpus:
     """Tokenized corpus with a deterministic train/val split."""
 
-    tokens: List[int]
-    train: List[int]
-    val: List[int]
+    tokens: Sequence[int]
+    train: Sequence[int]
+    val: Sequence[int]
     tokenizer: Tokenizer
 
 
@@ -46,16 +53,33 @@ def load_corpus(
     The split happens *after* tokenization so both folds share the same
     tokenization, and it is a pure token-stream split (no cross-contamination
     between folds).
+
+    For the byte tokenizer the tokens are the raw UTF-8 bytes, stored as a
+    numpy ``uint8`` view - O(1) extra memory regardless of corpus size.
     """
     if not Path(data_path).exists():
         raise FileNotFoundError(
             f"dataset file not found: {data_path}\n"
             "Run `python scripts/prepare_data.py` to download it."
         )
-    text = Path(data_path).read_text(encoding="utf-8")
+    raw = Path(data_path).read_bytes()
     if max_tokens is not None:
-        text = text[:max_tokens]
+        raw = raw[:max_tokens]
 
+    if isinstance(tokenizer, ByteTokenizer):
+        # tokens == UTF-8 bytes, zero-copy numpy view
+        tokens: Sequence[int] = np.frombuffer(raw, dtype=np.uint8)
+        if len(tokens) == 0:
+            raise ValueError(f"dataset {data_path} tokenized to zero tokens")
+        split = int(len(tokens) * train_split)
+        return TextCorpus(
+            tokens=tokens,
+            train=tokens[:split],
+            val=tokens[split:],
+            tokenizer=tokenizer,
+        )
+
+    text = raw.decode("utf-8")
     tokens = tokenizer.encode(text)
     if not tokens:
         raise ValueError(f"dataset {data_path} tokenized to zero tokens")
@@ -65,8 +89,8 @@ def load_corpus(
     idx = list(range(len(tokens)))
     rng.shuffle(idx)
     # Shuffling a token stream makes the val loss an honest estimate of
-    # in-distribution next-token prediction (this is a toy corpus; a real
-    # pipeline would split at document boundaries instead).
+    # in-distribution next-token prediction (toy corpora; real pipelines
+    # split at document boundaries instead).
     train = [tokens[i] for i in idx[:split]]
     val = [tokens[i] for i in idx[split:]]
     return TextCorpus(tokens=tokens, train=train, val=val, tokenizer=tokenizer)

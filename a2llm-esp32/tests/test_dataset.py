@@ -61,7 +61,8 @@ class TestSplit:
         t = ByteTokenizer()
         a = load_corpus(p, t, seed=3)
         b = load_corpus(p, t, seed=3)
-        assert a.train == b.train and a.val == b.val
+        # numpy-backed streams for the byte tokenizer
+        assert list(a.train) == list(b.train) and list(a.val) == list(b.val)
 
     def test_missing_file_raises(self, tmp_path):
         t = ByteTokenizer()
