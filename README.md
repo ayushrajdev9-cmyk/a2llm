@@ -7,7 +7,7 @@ No wrappers, no copied weights.
 
 | Model | Params | Status | Release |
 |-------|-------:|--------|---------|
-| a2llm-esp32-nano | 34,432 | ✅ trained | [v0.1.0](https://github.com/ayushrajdev9-cmyk/a2llm/releases/tag/v0.1.0) |
+| a2llm-esp32-nano | 34,432 | ✅ trained | v0.4.0 |
 | a2llm-micro | 120,064 | ✅ trained (multilingual) | [v0.3.0](https://github.com/ayushrajdev9-cmyk/a2llm/releases/tag/v0.3.0) |
 | a2llm-mini | 1,056,096 | ✅ trained | [v0.2.0](https://github.com/ayushrajdev9-cmyk/a2llm/releases/tag/v0.2.0) |
 | a2llm-small | 2,763,264 | ⏳ training | — |
@@ -18,6 +18,7 @@ No wrappers, no copied weights.
 
 | Release | Assets | Result |
 |---------|--------|--------|
+| [v0.4.0](https://github.com/ayushrajdev9-cmyk/a2llm/releases/tag/v0.4.0) | `a2llm-nano.pt` | val_loss 1.3139, ppl 3.72 |
 | [v0.3.0](https://github.com/ayushrajdev9-cmyk/a2llm/releases/tag/v0.3.0) | `a2llm-micro.pt` (+ nano, mini) | micro: val_loss 1.5686, ppl 4.80 |
 | [v0.2.0](https://github.com/ayushrajdev9-cmyk/a2llm/releases/tag/v0.2.0) | `a2llm-mini.pt` | mini: val_loss 3.3162, ppl 27.56 |
 | [v0.1.0](https://github.com/ayushrajdev9-cmyk/a2llm/releases/tag/v0.1.0) | `a2llm-esp32-nano.pt`, `a2llm-micro.pt` | first trained checkpoints |
