@@ -2,10 +2,9 @@
 """Train any A2LLM tier on a big GPU (RTX PRO 6000 / any cloud box) and auto-publish to GitHub.
 
 Usage:
-    GH_TOKEN=gho_xxx python scripts/train_cloud.py --preset base
-    python scripts/train_cloud.py --all                    # train all 6 tiers, publish each
-    python scripts/train_cloud.py --preset base --steps 40000 --batch-size 256
-    python scripts/train_cloud.py --preset base --no-publish
+    GH_TOKEN=ghp_xxx python scripts/train_cloud.py --preset base
+    GH_TOKEN=ghp_xxx python scripts/train_cloud.py --all          # train all 6 tiers, publish each
+    python scripts/train_cloud.py --preset base --no-publish      # dry run
 """
 from __future__ import annotations
 
@@ -18,14 +17,14 @@ import subprocess
 import sys
 import urllib.request
 
-# per-tier: tokens/step = batch * ctx  (all ~65k) -> ~30k steps = ~3.6 epochs of the 542M corpus
+# tokens/step = batch * ctx (all ~65k); 30k steps ≈ ~3 epochs of the combined corpus
 PRESETS = {
     "nano":  {"steps": 30000, "batch": 2048, "asset": "a2llm-nano.pt",  "release": "v0.4.0", "row": "a2llm-esp32-nano", "params": "34,432"},
-    "micro": {"steps": 30000, "batch": 1024, "asset": "a2llm-micro.pt", "release": "v0.9.0", "row": "a2llm-micro",      "params": "120,064"},
+    "micro": {"steps": 30000, "batch": 1024, "asset": "a2llm-micro.pt", "release": "v0.7.0", "row": "a2llm-micro",      "params": "120,064"},
     "mini":  {"steps": 30000, "batch": 512,  "asset": "a2llm-mini.pt",  "release": "v0.6.0", "row": "a2llm-mini",       "params": "1,056,096"},
     "small": {"steps": 30000, "batch": 256,  "asset": "a2llm-small.pt", "release": "v0.5.0", "row": "a2llm-small",      "params": "2,763,264"},
-    "base":  {"steps": 30000, "batch": 256,  "asset": "a2llm-base.pt",  "release": "v0.7.0", "row": "a2llm-base",       "params": "4,864,000"},
-    "large": {"steps": 30000, "batch": 128,  "asset": "a2llm-large.pt", "release": "v0.8.0", "row": "a2llm-large",      "params": "14,479,104"},
+    "base":  {"steps": 30000, "batch": 256,  "asset": "a2llm-base.pt",  "release": "v0.8.0", "row": "a2llm-base",       "params": "4,864,000"},
+    "large": {"steps": 30000, "batch": 128,  "asset": "a2llm-large.pt", "release": "v0.9.0", "row": "a2llm-large",      "params": "14,479,104"},
 }
 ORDER = ["nano", "micro", "mini", "small", "base", "large"]
 OWNER, REPO = "ayushrajdev9-cmyk", "a2llm"
@@ -37,7 +36,8 @@ def sh(cmd: str) -> None:
     subprocess.run(cmd, shell=True, check=True)
 
 
-def api(url: str, token: str, method: str = "GET", body: dict | None = None, raw: bytes | None = None, ctype: str | None = None):
+def api(url: str, token: str, method: str = "GET", body: dict | None = None,
+        raw: bytes | None = None, ctype: str | None = None):
     data = raw if raw is not None else (json.dumps(body).encode() if body is not None else None)
     req = urllib.request.Request(url, data=data, method=method)
     req.add_header("Authorization", f"token {token}")
@@ -58,14 +58,14 @@ def gpu_report() -> None:
         p = torch.cuda.get_device_properties(0)
         print(f"GPU: {torch.cuda.get_device_name(0)} | VRAM: {p.total_memory/1e9:.1f} GB | CC: {p.major}.{p.minor}")
         if p.major >= 12 and int(torch.__version__.split(".")[1]) < 7:
-            print("WARNING: Blackwell (CC 12.x) needs torch>=2.7 — install with: pip install torch --index-url https://download.pytorch.org/whl/cu128")
+            print("WARNING: Blackwell (CC 12.x) needs torch>=2.7:  pip install torch --index-url https://download.pytorch.org/whl/cu128")
     else:
         print("WARNING: no CUDA — training will be slow")
 
 
 def ensure_data() -> None:
     if not os.path.exists(DATA):
-        print("corpus missing — building (downloads are cached, ~7 min first time)")
+        print("corpus missing — building (downloads cached, ~7 min first time)")
         sh("python scripts/prepare_data_large.py")
     else:
         print(f"corpus present: {DATA} ({os.path.getsize(DATA)/1e6:.0f} MB)")
@@ -78,31 +78,28 @@ def train(preset: str, steps: int, batch: int) -> None:
 
 def publish(preset: str, token: str) -> None:
     cfg = PRESETS[preset]
-    ckpt = f"checkpoints/{preset}/best.pt"
     import torch
-    ck = torch.load(ckpt, map_location="cpu", weights_only=False)
+    ck = torch.load(f"checkpoints/{preset}/best.pt", map_location="cpu", weights_only=False)
     loss, ppl = float(ck["best_val_loss"]), math.exp(float(ck["best_val_loss"]))
     tag, asset = cfg["release"], cfg["asset"]
-    notes = (f"MODEL: {preset}\n**{asset}** — {preset} tier trained on multilingual corpus "
-             f"(en+hi+ur+bn, {cfg['steps']} steps x batch {cfg['batch']}, RTX PRO 6000).\n"
+    notes = (f"MODEL: {preset}\n**{asset}** — {preset} tier trained on combined corpus "
+             f"(multilingual en+hi+ur+bn + gpt-oss_20b distilled QA, {cfg['steps']} steps x batch {cfg['batch']}).\n"
              f"- params: {cfg['params']}\n- best val_loss {loss:.4f}, ppl {ppl:.2f}")
     base = f"https://api.github.com/repos/{OWNER}/{REPO}"
-    # 1) create or update the release
     st, r = api(f"{base}/releases", token, "POST",
                 {"tag_name": tag, "name": f"A2LLM {tag} — {preset}", "body": notes})
-    if st == 422:
+    if st == 422:  # tag exists -> update instead of create
         _, ex = api(f"{base}/releases/tags/{tag}", token)
         st, r = api(f"{base}/releases/{ex['id']}", token, "PATCH", {"body": notes})
     assert st < 300, f"release failed: {st} {r}"
     rid = r["id"]
-    # 2) upload the asset
-    with open(ckpt, "rb") as f:
+    with open(f"checkpoints/{preset}/best.pt", "rb") as f:
         data = f.read()
     st, u = api(f"https://uploads.github.com/repos/{OWNER}/{REPO}/releases/{rid}/assets?name={asset}",
                 token, "POST", raw=data, ctype="application/octet-stream")
     assert st < 300, f"upload failed: {st} {u}"
     print(f"✅ RELEASED: https://github.com/{OWNER}/{REPO}/releases/tag/{tag}  (val_loss {loss:.4f}, ppl {ppl:.2f})")
-    # 3) update MODELS.md + README.md
+    # docs update: MODELS.md + README.md via a fresh shallow clone
     sh(f"rm -rf /tmp/a2llm_docs && git clone -q --depth 1 https://x-access-token:{token}@github.com/{OWNER}/{REPO}.git /tmp/a2llm_docs")
     row, tag_url = cfg["row"], f"https://github.com/{OWNER}/{REPO}/releases/tag/{tag}"
     md = open("/tmp/a2llm_docs/MODELS.md").read()
@@ -110,7 +107,7 @@ def publish(preset: str, token: str) -> None:
         low = line.lower()
         if (row in low or (row == "a2llm-esp32-nano" and "a2llm-esp32 (nano)" in low)) and "trained" in low:
             indent = line[: len(line) - len(line.lstrip())]
-            md = md.replace(line, f"{indent}- {line.strip().split(':', 1)[0]}: TRAINED ✅  (release {tag}, multilingual, val_loss {loss:.4f}, ppl {ppl:.2f})")
+            md = md.replace(line, f"{indent}- {line.strip().split(':', 1)[0]}: TRAINED ✅  (release {tag}, combined corpus, val_loss {loss:.4f}, ppl {ppl:.2f})")
             break
     open("/tmp/a2llm_docs/MODELS.md", "w").write(md)
     rd = open("/tmp/a2llm_docs/README.md").read()
@@ -132,7 +129,7 @@ def main() -> None:
     ap.add_argument("--all", action="store_true", help="train all 6 tiers in order")
     ap.add_argument("--steps", type=int, default=None)
     ap.add_argument("--batch-size", type=int, default=None)
-    ap.add_argument("--token", default=os.environ.get("GH_TOKEN", ""), help="GitHub token (repo scope)")
+    ap.add_argument("--token", default=os.environ.get("GH_TOKEN", ""))
     ap.add_argument("--no-publish", action="store_true")
     args = ap.parse_args()
 
@@ -145,8 +142,7 @@ def main() -> None:
     ensure_data()
     presets = ORDER if args.all else [args.preset]
     for p in presets:
-        cfg = PRESETS[p]
-        train(p, args.steps or cfg["steps"], args.batch_size or cfg["batch"])
+        train(p, args.steps or PRESETS[p]["steps"], args.batch_size or PRESETS[p]["batch"])
         if not args.no_publish:
             publish(p, args.token)
     print("\nALL DONE 🎉")

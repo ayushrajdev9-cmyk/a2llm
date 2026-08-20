@@ -135,6 +135,63 @@ def main() -> None:
             total += n
             print(f"  + {label}: {n/1e6:,.0f} MB")
     print(f"== done: {total/1e9:.2f} GB of text (~{total/1e6:,.0f} M tokens) ==")
+    append_distilled(out)
+
+
+def append_distilled(out: str) -> None:
+    """Append uran1um1/gpt-oss_20b_distilled QA pairs (MIT license) to the corpus.
+
+    Idempotent: skips if the marker line is already present, so re-runs
+    never double-append the distilled data.
+    """
+    marker = "# === gpt-oss_20b_distilled (MIT) ==="
+    if marker in open(out, encoding="utf-8").read():
+        print("  [skip] distilled QA: already in corpus")
+        return
+    try:
+        from datasets import load_dataset
+    except ImportError:
+        print("  [skip] distilled QA: `pip install datasets` to enable")
+        return
+    try:
+        ds = load_dataset("uran1um1/gpt-oss_20b_distilled", split="train")
+        n = 0
+        with open(out, "a", encoding="utf-8") as fh:
+            fh.write("\n\n" + marker + "\n\n")
+            for row in ds:
+                for key in ("user", "assistant"):
+                    t = row.get(key)
+                    if isinstance(t, str) and t.strip():
+                        fh.write(t)
+                        fh.write("\n\n")
+                        n += len(t.encode("utf-8"))
+        print(f"  + distilled-qa (gpt-oss_20b, MIT): {n/1e6:,.0f} MB (~{n/1e6:.0f} M tokens)")
+    except Exception as exc:  # never break the corpus build
+        print(f"  [skip] distilled QA: {exc}")
+    append_distilled(Path(out))
+
+
+def append_distilled(out: Path) -> None:
+    """Append gpt-oss_20b_distilled QA pairs (MIT licensed) to the corpus."""
+    try:
+        from datasets import load_dataset
+    except ImportError:
+        print("  [skip] distilled QA: pip install datasets", file=sys.stderr)
+        return
+    try:
+        ds = load_dataset("uran1um1/gpt-oss_20b_distilled", split="train")
+        n = 0
+        with open(out, "a", encoding="utf-8") as fh:
+            for row in ds:
+                for key in ("user", "assistant"):
+                    t = row.get(key)
+                    if isinstance(t, str) and t.strip():
+                        fh.write(t)
+                        fh.write("\n\n")
+                        n += len(t.encode("utf-8"))
+        print(f"  + distilled-qa (gpt-oss_20b, MIT): {n/1e6:,.0f} MB (~{n/1e6:.0f} M tokens)")
+    except Exception as exc:  # never break the corpus build
+        print(f"  [skip] distilled QA: {exc}", file=sys.stderr)
 
 
 if __name__ == "__main__":
