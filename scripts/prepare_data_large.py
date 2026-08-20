@@ -110,28 +110,32 @@ def main() -> None:
             if not download(url, dest, label):
                 continue
             n = 0
-            if kind == "parquet":
-                n = write_parquet_text(dest, fh)
-            elif kind == "plain":
-                data = dest.read_bytes()
-                fh.write(data.decode("utf-8", errors="ignore"))
-                fh.write("\n\n")
-                n = len(data)
-            else:
-                with gzip.open(dest, "rt", encoding="utf-8", errors="ignore") as gz:
-                    for line in gz:
-                        line = line.strip()
-                        if not line:
-                            continue
-                        try:
-                            obj = json.loads(line)
-                        except json.JSONDecodeError:
-                            continue
-                        text = obj.get("text")
-                        if text:
-                            fh.write(text)
-                            fh.write("\n\n")
-                            n += len(text.encode("utf-8"))
+            try:
+                if kind == "parquet":
+                    n = write_parquet_text(dest, fh)
+                elif kind == "plain":
+                    data = dest.read_bytes()
+                    fh.write(data.decode("utf-8", errors="ignore"))
+                    fh.write("\n\n")
+                    n = len(data)
+                else:
+                    with gzip.open(dest, "rt", encoding="utf-8", errors="ignore") as gz:
+                        for line in gz:
+                            line = line.strip()
+                            if not line:
+                                continue
+                            try:
+                                obj = json.loads(line)
+                            except json.JSONDecodeError:
+                                continue
+                            text = obj.get("text")
+                            if text:
+                                fh.write(text)
+                                fh.write("\n\n")
+                                n += len(text.encode("utf-8"))
+            except Exception as exc:  # one bad source must not kill the build
+                print(f"  [skip] {label}: {exc}", file=sys.stderr)
+                continue
             total += n
             print(f"  + {label}: {n/1e6:,.0f} MB")
     print(f"== done: {total/1e9:.2f} GB of text (~{total/1e6:,.0f} M tokens) ==")
