@@ -165,6 +165,8 @@ def append_distilled(out: str) -> None:
             for row in ds:
                 for key in ("user", "assistant"):
                     t = row.get(key)
+                    if isinstance(t, dict):  # dataset stores {"content": "..."}
+                        t = t.get("content")
                     if isinstance(t, str) and t.strip():
                         fh.write(t)
                         fh.write("\n\n")
