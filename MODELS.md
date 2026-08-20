@@ -17,7 +17,7 @@ a2llm-large           14,479,104     55.2 MB 14139.8 KB   best VPS / GPU
 
 STATUS:
   - - A2LLM-ESP32 (nano): TRAINED ✅  (release v0.4.0, combined corpus, val_loss 1.3139, ppl 3.72)
-  - a2llm-micro: TRAINED ✅  (GitHub release v0.3.0, MULTILINGUAL corpus, val_loss 1.5686, ppl 4.80, 200K steps on T4)
+  - - a2llm-micro: TRAINED ✅  (release v0.7.0, combined corpus, val_loss 1.1831, ppl 3.26)
   - a2llm-mini: TRAINED ✅  (GitHub release v0.2.0, val_loss 3.3162, ppl 27.56, 4000 steps on T4 in 67.6s)
   - a2llm-small: config ready - not trained yet
   - a2llm-base: config ready - not trained yet (best for Colab T4)
