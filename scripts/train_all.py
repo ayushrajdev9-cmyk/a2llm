@@ -38,6 +38,7 @@ def sh(cmd: str) -> None:
 def main() -> None:
     if not TOKEN:
         sys.exit("Set your GitHub token first:\n\n    GH_TOKEN=ghp_xxx python train_all.py\n")
+    os.chdir("/")  # marimo/cloud shells can start with a deleted cwd; go somewhere valid
     print("===== A2LLM: train ALL models + publish =====")
     print("plan:", " -> ".join(TIERS), flush=True)
 
